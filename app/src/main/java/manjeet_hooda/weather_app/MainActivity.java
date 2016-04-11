@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.AnimationDrawable;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -30,21 +32,19 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity {
 
-    private GoogleApiClient mGoogleApiClient;
     private Double mLat, mLon;
-    AnimationDrawable weatherAnimation;
-
     private Context mContext;
 
+    GpsTracker gps;
+
     final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
-    protected LocationManager locationManager;
 
     private FetchWeather mFetchWeather;
     private TextView vLocation, vTemp,vDetails;
 
+    private boolean isNet;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,9 +55,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         vDetails = (TextView) findViewById(R.id.details_field);
         mContext = this;
 
-        setupGoogleApiClient();
+        get_location();
+        isInternet();
+        if(isInternet())
+            fetchWeather();
         setupRefresh();
 
+    }
+
+    public boolean isInternet(){
+        final ConnectivityManager connectivityManager = (ConnectivityManager) mContext
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        if (activeNetwork == null){
+            Toast.makeText(this,"No Network Connection",Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
     }
 
     public void setupRefresh(){
@@ -66,40 +80,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             @Override
             public void onClick(View v) {
-                Toast.makeText(mContext, "Refreshing... Please wait", Toast.LENGTH_SHORT).show();
-                fetchWeather();
-                Toast.makeText(mContext, "Refreshed", Toast.LENGTH_SHORT).show();
+                if(isInternet()) {
+                    Toast.makeText(mContext, "Refreshing... Please wait", Toast.LENGTH_SHORT).show();
+                    get_location();
+                    fetchWeather();
+                    Toast.makeText(mContext, "Refreshed", Toast.LENGTH_SHORT).show();
+                }
             }
         });
-    }
-
-    public void setupGoogleApiClient(){
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION },
-                    PERMISSION_ACCESS_COARSE_LOCATION);
-        }
-        mGoogleApiClient = new GoogleApiClient.Builder(this, this, this).addApi(LocationServices.API).build();
     }
 
     public void fetchWeather(){
         mFetchWeather = new FetchWeather(this, this);
         mFetchWeather.execute(mLat, mLon);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        mGoogleApiClient.disconnect();
-        super.onStop();
     }
 
     @Override
@@ -116,26 +109,24 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
+    public void get_location(){
+        gps = new GpsTracker(this);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            mLat = lastLocation.getLatitude();
-            mLon = lastLocation.getLongitude();
-            fetchWeather();
+        // check if GPS enabled
+        if(gps.canGetLocation()){
+
+            mLat = gps.getLatitude();
+            mLon = gps.getLongitude();
+
+            // \n is for new line
+           // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
+            //        Toast.LENGTH_LONG).show();
+        }else{
+            // can't get location
+            // GPS or Network is not enabled
+            // Ask user to enable GPS/network in settings
+            gps.showSettingsAlert();
         }
-    }
-
-    @Override
-    public void onConnectionSuspended(int a){
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult result){
-
     }
 
     public void get_weather(String[] weather){
