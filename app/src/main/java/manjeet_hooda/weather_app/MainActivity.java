@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
             mLon = gps.getLongitude();
 
             // \n is for new line
-           // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
+            // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
             //        Toast.LENGTH_LONG).show();
         }else{
             // can't get location
