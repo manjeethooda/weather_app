@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
             // GPS or Network is not enabled
             // Ask user to enable GPS/network in settings
             gps.showSettingsAlert();
+            get_location();
         }
     }
 
