@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Double mLat, mLon;
     private Context mContext;
+    private boolean locationNotFound;
 
     GpsTracker gps;
 
@@ -54,8 +55,11 @@ public class MainActivity extends AppCompatActivity {
         vTemp = (TextView) findViewById(R.id.current_temperature_field);
         vDetails = (TextView) findViewById(R.id.details_field);
         mContext = this;
+        locationNotFound = false;
 
         get_location();
+        if(locationNotFound)
+            get_location();
         isInternet();
         if(isInternet())
             fetchWeather();
@@ -126,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
             // GPS or Network is not enabled
             // Ask user to enable GPS/network in settings
             gps.showSettingsAlert();
-            get_location();
+            locationNotFound = true;
+            //get_location();
         }
     }
 
