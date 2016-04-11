@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         get_location();
         isInternet();
-        fetchWeather();
         setupRefresh();
 
     }
@@ -75,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void setupRefresh(){
         get_location();
+        fetchWeather();
+
         ImageView imageView = (ImageView)findViewById(R.id.refresh);
         imageView.setOnClickListener(new View.OnClickListener() {
 
