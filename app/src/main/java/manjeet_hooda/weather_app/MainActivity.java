@@ -73,8 +73,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setupRefresh(){
-        //get_location();
-        Toast.makeText(this,"Please refresh",Toast.LENGTH_LONG).show();
+        get_location();
         fetchWeather();
 
         ImageView imageView = (ImageView)findViewById(R.id.refresh);
