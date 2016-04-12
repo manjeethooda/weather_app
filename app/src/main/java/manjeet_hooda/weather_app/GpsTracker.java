@@ -10,17 +10,23 @@ import android.app.AlertDialog;
         import android.content.Context;
         import android.content.DialogInterface;
         import android.content.Intent;
-        import android.location.Location;
+import android.content.pm.PackageManager;
+import android.location.Location;
         import android.location.LocationListener;
         import android.location.LocationManager;
-        import android.os.Bundle;
+import android.os.Build;
+import android.os.Bundle;
         import android.os.IBinder;
         import android.provider.Settings;
-        import android.util.Log;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 public class GpsTracker extends Service implements LocationListener {
 
     private final Context mContext;
+
+    final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
     // flag for GPS status
     boolean isGPSEnabled = false;
@@ -157,6 +163,7 @@ public class GpsTracker extends Service implements LocationListener {
      * */
     public void showSettingsAlert(){
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(mContext);
+        //canGetLocation = true;
 
         // Setting Dialog Title
         alertDialog.setTitle("GPS");

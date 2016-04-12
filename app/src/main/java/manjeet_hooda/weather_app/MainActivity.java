@@ -36,27 +36,36 @@ public class MainActivity extends AppCompatActivity {
 
     private Double mLat, mLon;
     private Context mContext;
+    final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
     GpsTracker gps;
-
-    final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
+    Bundle savedInstanceState;
 
     private FetchWeather mFetchWeather;
     private TextView vLocation, vTemp,vDetails;
+    ImageView imageView;
 
-    private boolean isNet;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        gps = new GpsTracker(this);
         vLocation = (TextView) findViewById(R.id.Place);
         vTemp = (TextView) findViewById(R.id.current_temperature_field);
         vDetails = (TextView) findViewById(R.id.details_field);
+        imageView = (ImageView)findViewById(R.id.refresh);
         mContext = this;
+
+        if ( ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED ) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    gps.PERMISSION_ACCESS_COARSE_LOCATION);
+        }
 
         get_location();
         isInternet();
+        fetchWeather();
         setupRefresh();
 
     }
@@ -73,10 +82,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setupRefresh(){
-        get_location();
-        fetchWeather();
-
-        ImageView imageView = (ImageView)findViewById(R.id.refresh);
         imageView.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -114,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void get_location(){
         gps = new GpsTracker(this);
-
         // check if GPS enabled
         if(gps.canGetLocation()){
 
@@ -128,9 +132,17 @@ public class MainActivity extends AppCompatActivity {
             // can't get location
             // GPS or Network is not enabled
             // Ask user to enable GPS/network in settings
-            gps.showSettingsAlert();
+            if(!(gps.isNetworkEnabled || gps.isNetworkEnabled))
+                gps.showSettingsAlert();
             //get_location();
         }
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        get_location();
+        fetchWeather();
     }
 
     public void get_weather(String[] weather){
