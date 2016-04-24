@@ -28,6 +28,8 @@ public class GpsTracker extends Service implements LocationListener {
 
     final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
+    private MainActivity mainActivity;
+
     // flag for GPS status
     boolean isGPSEnabled = false;
 
@@ -50,8 +52,9 @@ public class GpsTracker extends Service implements LocationListener {
     // Declaring a Location Manager
     protected LocationManager locationManager;
 
-    public GpsTracker(Context context) {
+    public GpsTracker(Context context, MainActivity activity) {
         this.mContext = context;
+        this.mainActivity = activity;
         getLocation();
     }
 
@@ -69,7 +72,7 @@ public class GpsTracker extends Service implements LocationListener {
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-                // no network provider is enabled
+                //showSettingsAlert();
             } else {
                 this.canGetLocation = true;
                 // First get location from Network Provider
@@ -188,6 +191,7 @@ public class GpsTracker extends Service implements LocationListener {
 
         // Showing Alert Message
         alertDialog.show();
+        //getLocation();
     }
 
     @Override

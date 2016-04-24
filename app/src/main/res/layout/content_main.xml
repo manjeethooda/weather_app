@@ -6,15 +6,17 @@
     android:background="@color/blue"
     >
 
-    <ImageView
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:id="@+id/loadingPanel"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
-        android:src="@android:drawable/ic_menu_rotate"
-        android:paddingRight="5dp"
-        android:alpha=".75"
-        android:id="@+id/refresh"
-        />
+        android:gravity="center_horizontal" >
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/Place"

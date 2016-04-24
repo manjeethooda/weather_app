@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,70 +38,52 @@ public class MainActivity extends AppCompatActivity {
     private Double mLat, mLon;
     private Context mContext;
     final int PERMISSION_ACCESS_COARSE_LOCATION = 1;
-
-    GpsTracker gps;
-    Bundle savedInstanceState;
+    private GpsTracker gps;
+    private RelativeLayout loadingPanel;
+    private boolean internetConnection;
 
     private FetchWeather mFetchWeather;
     private TextView vLocation, vTemp,vDetails;
-    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gps = new GpsTracker(this);
+        setupVariables();
+        if ( ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED ) {
+                        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                                gps.PERMISSION_ACCESS_COARSE_LOCATION);
+                    }
+        isInternet();
+        setupFloatingRefresh();
+        fetchWeather();
+
+    }
+
+    private void setupVariables(){
         vLocation = (TextView) findViewById(R.id.Place);
         vTemp = (TextView) findViewById(R.id.current_temperature_field);
         vDetails = (TextView) findViewById(R.id.details_field);
-        imageView = (ImageView)findViewById(R.id.refresh);
         mContext = this;
-
-        if ( ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED ) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                    gps.PERMISSION_ACCESS_COARSE_LOCATION);
-        }
-
-        get_location();
-        isInternet();
-        fetchWeather();
-        setupRefresh();
-
+        gps = new GpsTracker(this, this);
+        loadingPanel = (RelativeLayout)findViewById(R.id.loadingPanel);
+        internetConnection = false;
     }
 
-    public boolean isInternet(){
-        final ConnectivityManager connectivityManager = (ConnectivityManager) mContext
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-        if (activeNetwork == null){
-            Toast.makeText(this,"No Network Connection",Toast.LENGTH_LONG).show();
-            return false;
-        }
-        return true;
-    }
-
-    public void setupRefresh(){
-        imageView.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if(isInternet()) {
-                    Toast.makeText(mContext, "Refreshing... Please wait", Toast.LENGTH_SHORT).show();
-                    get_location();
-                    fetchWeather();
-                    Toast.makeText(mContext, "Refreshed", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+    public void isInternet(){
+        internetConnection = NoDataConnection.hasDataConnection(this);
+        if(!internetConnection)
+            NoDataConnection.showDialog(this);
     }
 
     public void fetchWeather(){
-        if(isInternet()) {
-            mFetchWeather = new FetchWeather(this, this);
-            mFetchWeather.execute(mLat, mLon);
-        }
+            if(internetConnection && get_location()) {
+                loadingPanel.setVisibility(View.VISIBLE);
+                mFetchWeather = new FetchWeather(this, this);
+                mFetchWeather.execute(mLat, mLon);
+            }
     }
 
     @Override
@@ -117,38 +100,50 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void get_location(){
-        gps = new GpsTracker(this);
-        // check if GPS enabled
-        if(gps.canGetLocation()){
+    public boolean get_location(){
+            gps = new GpsTracker(this, this);
+            // check if GPS enabled
+            if (gps.canGetLocation()) {
 
-            mLat = gps.getLatitude();
-            mLon = gps.getLongitude();
+                mLat = gps.getLatitude();
+                mLon = gps.getLongitude();
 
-            // \n is for new line
-            // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
-            //        Toast.LENGTH_LONG).show();
-        }else{
-            // can't get location
-            // GPS or Network is not enabled
-            // Ask user to enable GPS/network in settings
-            if(!(gps.isNetworkEnabled || gps.isNetworkEnabled))
-                gps.showSettingsAlert();
-            //get_location();
-        }
+                // \n is for new line
+                // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
+                //        Toast.LENGTH_LONG).show();
+                return true;
+            }
+        gps.showSettingsAlert();
+        return false;
+    }
+
+    private void setupFloatingRefresh(){
+        FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                    isInternet();
+                    fetchWeather();
+            }
+        });
+
     }
 
     @Override
     public void onResume(){
         super.onResume();
-        get_location();
-        fetchWeather();
+        if(NoDataConnection.hasDataConnection(this)) {
+            internetConnection = NoDataConnection.hasDataConnection(this);
+            get_location();
+            fetchWeather();
+        }
     }
 
     public void get_weather(String[] weather){
         vLocation.setText(weather[1]);
         vDetails.setText(weather[3]);
         vTemp.setText(weather[2]);
+        loadingPanel.setVisibility(View.INVISIBLE);
     }
 
 }
