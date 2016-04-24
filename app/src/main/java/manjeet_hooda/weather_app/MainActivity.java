@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private GpsTracker gps;
     private RelativeLayout loadingPanel;
     private boolean internetConnection;
+    private boolean canGetLocation;
 
     private FetchWeather mFetchWeather;
     private TextView vLocation, vTemp,vDetails;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         gps = new GpsTracker(this, this);
         loadingPanel = (RelativeLayout)findViewById(R.id.loadingPanel);
         internetConnection = false;
+        canGetLocation = false;
     }
 
     public void isInternet(){
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fetchWeather(){
-            if(internetConnection && get_location()) {
+            if(internetConnection && canGetLocation) {
                 loadingPanel.setVisibility(View.VISIBLE);
                 mFetchWeather = new FetchWeather(this, this);
                 mFetchWeather.execute(mLat, mLon);
@@ -111,9 +113,10 @@ public class MainActivity extends AppCompatActivity {
                 // \n is for new line
                 // Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + mLat + "\nLong: " + mLon,
                 //        Toast.LENGTH_LONG).show();
+                canGetLocation = true;
                 return true;
             }
-        gps.showSettingsAlert();
+        canGetLocation = false;
         return false;
     }
 
@@ -123,10 +126,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                     isInternet();
+                    get_location();
+                    showGpsDialog();
                     fetchWeather();
             }
         });
 
+    }
+
+    private void showGpsDialog(){
+        if(!canGetLocation)
+            gps.showSettingsAlert();
     }
 
     @Override
@@ -135,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         if(NoDataConnection.hasDataConnection(this)) {
             internetConnection = NoDataConnection.hasDataConnection(this);
             get_location();
+            showGpsDialog();
             fetchWeather();
         }
     }
